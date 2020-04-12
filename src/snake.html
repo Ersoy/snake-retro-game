@@ -1,0 +1,221 @@
+<html>
+    <head>
+        <title>Snake Game</title>    
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js"  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+        <style>
+            * {
+                font-family: 'Bungee', cursive;
+                font-size: 1.08em;
+                padding: 0;
+                margin: 0;                
+            }
+            body {        
+                margin: 20px;
+                padding: 0;
+                position: relative;
+            }
+            #start {                               
+                color: darkgreen;                
+                display: block;                
+                background-color: transparent;
+                border: none;
+                outline-color: none;
+                outline-width: 0;
+            }
+            #start:hover {
+                color: green;
+            }
+            #start:active {
+                color: lightgreen;
+            }
+
+            #canvas {
+                position: absolute;
+                top: 0;
+                left: 0;                
+            }
+            #statusBar {
+                position: relative;     
+                left: 0;           
+            }
+            #statusBar #score {
+                width: 5em;
+                float: left;
+                display: block;
+            }
+            #statusBar #time {
+                width: 5em;
+                right: 0;
+                text-align: right;
+                display: block;
+                float: right;
+            }
+            #usage {
+                position: relative;                
+                text-align: center;
+                color: #888;
+                left: 0;
+            }
+            #menu {
+                top: 0;
+                left: 0;
+                position: absolute;                
+                background-color: greenyellow;       
+                opacity: .1;
+                vertical-align: middle;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>        
+        <div>
+            <canvas id="canvas">
+                It is a pitty that your browser does not support the canvas element!
+            </canvas>                   
+        </div>
+
+        <table id="statusBar">
+            <tr>
+                <td>
+                    <span id="score">0</span>
+                </td>
+                <td align="center">
+                    <button id="start">Start</button>
+                </td>
+                <td align="right">
+                    <span id="time">00:00</span>
+                </td>
+            </tr>
+        </table>
+
+        <div id="menu">                                    
+        </div>
+
+        <div id="usage">
+            Use arrow keys to move the snake
+        </div>
+
+        <dl id="scoreBoard" class="score-board"></dl>
+        
+        <script src="snake.js"></script>
+
+        <script>
+            var dLeft = 0;
+            var dRight = 1;
+            var dUp = 2;
+            var dDown = 3;
+
+            var canvas = document.getElementById("canvas");
+            var menu = document.getElementById("menu");            
+            var statusBar = document.getElementById("statusBar");            
+            var score = document.getElementById("score");
+            var time = document.getElementById("time");            
+            
+            var game = new Game(canvas, 30, 18, 25, 2);
+            
+            $(statusBar).css("top", canvas.height + 10);
+            $(statusBar).css("width", canvas.width);            
+
+            menu.width = canvas.width;
+            menu.height = canvas.height;
+            $(menu).css("width", canvas.width);
+            $(menu).css("height", canvas.height);
+            $("#usage").css("width", canvas.width)
+                .css("top", canvas.height + 40);
+            
+            game.onTime = function(t) {
+                function indent(v) {
+                    if (v < 10)
+                        return "0" + v;
+                    return v;
+                }
+
+                if (t < 60)
+                    time.innerText = "00:" + indent(t);
+                else {                                               
+                    var m = parseInt(t / 60);
+                    var s = t % 60;
+                    time.innerText = indent(m) + ":" + indent(s);
+                }
+            };
+
+            game.onScore = function(s) {                
+                if (game.scores.length > 0) {
+                    var highest = game.scores[0][0];
+                    score.innerText = s + "/" + highest;                    
+                }
+                else
+                    score.innerText = s;
+            };
+
+            $(document).ready(function(){                
+                $(document).keydown(function (e) {
+                    switch(e.which) {
+                        case 37: // left                            
+                            if (game.getDirection() != dRight)
+                                game.setDirection(dLeft);
+                            break;
+                        case 38: // up
+                            if (game.getDirection() != dDown)
+                                game.setDirection(dUp);
+                            break;
+                        case 39: // right                        
+                            if (game.getDirection() != dLeft)
+                                game.setDirection(dRight);
+                            break;
+                        case 40: // down
+                        if (game.getDirection() != dUp)
+                                game.setDirection(dDown);
+                            break;
+                        default: 
+                            return; // exit this handler for other keys
+                    }
+                    e.preventDefault(); // prevent the default action (scroll / move caret)
+                });
+
+                $(document).click(function(e) {
+                    game.snake.snake.pop();
+                });
+
+                $("#start").click(function() {
+                    start();
+                });
+            });
+
+            function start() {
+                score.innerText = 0;
+                score.time = "00:00";                                
+                $("#start").prop("disabled", true).hide();
+                $(menu).hide();
+                game.clear();
+
+                game.onGameOver = function() {
+                    var text = "Game Over";
+
+                    if (game.scores.length > 0) {
+                        var highest = game.scores[0][0];
+                        if (highest < game.score)
+                            text = "Highest Score";
+                    }
+
+                    game.write(text, "yellow");
+
+                    $("#start").prop("disabled", false).show().focus();
+                    $(menu).show();
+                };
+
+                var counter = ["GO!", 1, 2, 3];
+                var startTimer = window.setInterval(function() {
+                    if (counter.length == 0) {
+                        game.start();
+                        window.clearInterval(startTimer);                        
+                        return;
+                    }
+                    game.clear();
+                    game.write(counter.pop(), "white");
+                }, 700);                
+            }            
+        </script>
+    </body>
+</html>
